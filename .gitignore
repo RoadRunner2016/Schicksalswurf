@@ -1,0 +1,41 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+/builds/
+
+# Mono/C# specific ignores
+.mono/
+data_*/
+mono_crash.*.json
+mono_crash.*.blob
+
+# .NET / Godot build artifacts
+obj/
+bin/
+*.csproj.user
+*.sln.user
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE / Editor files
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Save files (user data)
+*.sav
+*.save
