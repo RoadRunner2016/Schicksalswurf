@@ -33,6 +33,8 @@ namespace Schicksalswurf.Dungeon
         private CombatManager _combat;
         private bool _inCombat = false;
         private CombatUI _combatUI;
+        private CombatScene3D _combatScene;
+        private bool _combatSceneActive = false;
         private float _enemyTurnDelay = 0;
 
         // Character sheet
@@ -905,6 +907,61 @@ namespace Schicksalswurf.Dungeon
             _renderer.RemoveTileObject(pos);
         }
 
+        private void StartCombatScene()
+        {
+            if (_combatScene == null)
+            {
+                _combatScene = new CombatScene3D { Name = "CombatScene3D" };
+                AddChild(_combatScene);
+            }
+
+            _combatScene.Visible = true;
+            _combatSceneActive = true;
+
+            // Hide dungeon renderer during combat
+            if (_renderer != null)
+                _renderer.Visible = false;
+
+            // Setup and render the combat grid
+            _combatScene.SetupGrid(_combat.Grid);
+            _combatScene.RenderUnits(_combat.Grid);
+
+            // Focus camera on active unit
+            if (_combat.ActiveUnit != null)
+                _combatScene.FocusCameraOn(_combat.ActiveUnit.GridPosition);
+
+            // Make combat camera current
+            _combatScene.CombatCamera.Current = true;
+        }
+
+        private void EndCombatScene()
+        {
+            _combatSceneActive = false;
+            if (_combatScene != null)
+                _combatScene.Visible = false;
+
+            // Show dungeon renderer again
+            if (_renderer != null)
+                _renderer.Visible = true;
+
+            // Restore first-person camera
+            if (_camera != null)
+                _camera.Current = true;
+        }
+
+        private void UpdateCombatScene()
+        {
+            if (_combatScene == null || !_combatSceneActive) return;
+
+            _combatScene.RenderUnits(_combat.Grid);
+
+            if (_combat.ActiveUnit != null)
+            {
+                _combatScene.SelectUnit(_combat.ActiveUnit.GridPosition);
+                _combatScene.FocusCameraOn(_combat.ActiveUnit.GridPosition);
+            }
+        }
+
         private void StartRandomEncounter()
         {
             var encounter = new Encounter();
@@ -936,6 +993,9 @@ namespace Schicksalswurf.Dungeon
             _enemyTurnDelay = 0.8f;
             _combat.StartCombat();
 
+            // Switch to isometric combat scene
+            StartCombatScene();
+
             _combatUI.StartCombat(_combat);
         }
 
@@ -945,6 +1005,7 @@ namespace Schicksalswurf.Dungeon
             _enemyTurnDelay = 0.8f;
             if (_combatUI != null)
                 _combatUI.StartCombat(_combat); // refresh display
+            UpdateCombatScene();
             CheckCombatEnd();
         }
 
@@ -955,6 +1016,7 @@ namespace Schicksalswurf.Dungeon
             {
                 _inCombat = false;
                 _combatUI.EndCombat();
+                EndCombatScene();
 
                 if (_combat.Phase == CombatPhase.Victory)
                 {

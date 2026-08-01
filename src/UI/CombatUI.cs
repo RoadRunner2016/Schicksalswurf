@@ -180,7 +180,7 @@ namespace Schicksalswurf.UI
                         {
                             ConfirmSpellCast();
                         }
-                        else if (key.Keycode == Key.Escape || key.Keycode == Key.E)
+                        else if (key.Keycode == Key.Escape || key.Keycode == Key.H)
                         {
                             CancelSpellSelect();
                         }
@@ -199,15 +199,43 @@ namespace Schicksalswurf.UI
                     }
                 }
 
-                // A = attack, D = defend, F = flee, E = cast spell
+                // Arrow keys / WASD for grid movement during player turn
+                if (@event is InputEventKey moveKey && moveKey.Pressed)
+                {
+                    if (_combat.ActiveUnit != null && _combat.ActiveUnit.MovementPoints > 0)
+                    {
+                        Vector2I currentPos = _combat.ActiveUnit.GridPosition;
+                        Vector2I targetPos = currentPos;
+
+                        if (moveKey.Keycode == Key.Up || moveKey.Keycode == Key.W)
+                            targetPos = currentPos + new Vector2I(0, -1);
+                        else if (moveKey.Keycode == Key.Down || moveKey.Keycode == Key.S)
+                            targetPos = currentPos + new Vector2I(0, 1);
+                        else if (moveKey.Keycode == Key.Left || moveKey.Keycode == Key.A)
+                            targetPos = currentPos + new Vector2I(-1, 0);
+                        else if (moveKey.Keycode == Key.Right || moveKey.Keycode == Key.D)
+                            targetPos = currentPos + new Vector2I(1, 0);
+
+                        if (targetPos != currentPos)
+                        {
+                            if (_combat.MovePlayerUnit(current.Character, targetPos))
+                            {
+                                AfterAction();
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                // F = attack, G = spell, V = defend, B = flee (WASD used for grid movement)
                 if (@event.IsActionPressed("interact"))
                     ExecuteAttack();
-                else if (@event.IsActionPressed("turn_left"))
-                    ExecuteDefend();
-                else if (@event.IsActionPressed("move_backward"))
-                    ExecuteFlee();
-                else if (@event.IsActionPressed("strafe_right"))
+                else if (@event is InputEventKey gKey && gKey.Pressed && gKey.Keycode == Key.G)
                     EnterSpellSelect();
+                else if (@event is InputEventKey vKey && vKey.Pressed && vKey.Keycode == Key.V)
+                    ExecuteDefend();
+                else if (@event is InputEventKey bKey && bKey.Pressed && bKey.Keycode == Key.B)
+                    ExecuteFlee();
             }
         }
 
@@ -497,10 +525,19 @@ namespace Schicksalswurf.UI
 
             if (isPlayerTurn)
             {
+                // Show movement points
+                if (_combat.ActiveUnit != null)
+                {
+                    var mpLabel = new Label { Text = $"Bewegung: {_combat.ActiveUnit.MovementPoints}/{_combat.ActiveUnit.MaxMovementPoints} FP" };
+                    mpLabel.AddThemeColorOverride("font_color", new Color(0.5f, 0.8f, 0.5f));
+                    mpLabel.AddThemeFontSizeOverride("font_size", 13);
+                    _actionButtons.AddChild(mpLabel);
+                }
+
                 AddActionButton("F: Angreifen", ExecuteAttack);
-                AddActionButton("E: Zauber", EnterSpellSelect);
-                AddActionButton("A: Verteidigen", ExecuteDefend);
-                AddActionButton("S: Fliehen", ExecuteFlee);
+                AddActionButton("G: Zauber", EnterSpellSelect);
+                AddActionButton("V: Verteidigen", ExecuteDefend);
+                AddActionButton("B: Fliehen", ExecuteFlee);
             }
             else
             {

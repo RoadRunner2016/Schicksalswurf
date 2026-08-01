@@ -50,11 +50,16 @@ namespace Schicksalswurf.Combat
         public int CurrentIndex { get; set; } = 0;
         public CombatPhase Phase { get; set; } = CombatPhase.Initiative;
         public List<string> Log { get; } = new();
+        public CombatGrid Grid { get; private set; }
+        public Dictionary<Character, CombatUnit> PartyUnits { get; } = new();
+        public Dictionary<Enemy, CombatUnit> EnemyUnits { get; } = new();
+        public CombatUnit ActiveUnit { get; set; }
 
         public CombatManager(Party party, Encounter encounter)
         {
             Party = party;
             Encounter = encounter;
+            Grid = new CombatGrid();
         }
 
         public void StartCombat()
@@ -62,25 +67,59 @@ namespace Schicksalswurf.Combat
             Log.Clear();
             InitiativeOrder.Clear();
             CurrentIndex = 0;
+            Grid.Clear();
+            PartyUnits.Clear();
+            EnemyUnits.Clear();
 
+            // Place party on grid
+            int slot = 0;
             foreach (var c in Party.AliveMembers)
             {
                 int roll = DiceRoller.RollD20();
-                InitiativeOrder.Add(new InitiativeEntry
+                var entry = new InitiativeEntry
                 {
                     Character = c,
                     Initiative = roll + c.CombatStats.Initiative
-                });
+                };
+                InitiativeOrder.Add(entry);
+
+                var gridPos = Grid.GetPartyPosition(slot);
+                var unit = new CombatUnit
+                {
+                    Character = c,
+                    GridPosition = gridPos,
+                    MaxMovementPoints = 2 + c.CombatStats.Initiative / 4,
+                    MovementPoints = 2 + c.CombatStats.Initiative / 4
+                };
+                Grid.Units[gridPos] = unit;
+                PartyUnits[c] = unit;
+                slot++;
             }
 
+            // Place enemies on grid
+            int enemyIdx = 0;
+            int totalEnemies = Encounter.AliveEnemies.Count();
             foreach (var e in Encounter.AliveEnemies)
             {
                 int roll = DiceRoller.RollD20();
-                InitiativeOrder.Add(new InitiativeEntry
+                var entry = new InitiativeEntry
                 {
                     Enemy = e,
                     Initiative = roll + e.Initiative
-                });
+                };
+                InitiativeOrder.Add(entry);
+
+                var gridPos = Grid.GetEnemyPosition(enemyIdx, totalEnemies);
+                var unit = new CombatUnit
+                {
+                    Enemy = e,
+                    GridPosition = gridPos,
+                    MaxMovementPoints = 2 + e.Initiative / 4,
+                    MovementPoints = 2 + e.Initiative / 4
+                };
+                Grid.Units[gridPos] = unit;
+                EnemyUnits[e] = unit;
+                enemyIdx++;
             }
 
             InitiativeOrder.Sort((a, b) => b.Initiative.CompareTo(a.Initiative));
@@ -127,6 +166,18 @@ namespace Schicksalswurf.Combat
 
             Phase = current.IsPlayer ? CombatPhase.PlayerTurn : CombatPhase.EnemyTurn;
 
+            // Set active unit and reset its turn
+            if (current.IsPlayer && PartyUnits.TryGetValue(current.Character, out var pUnit))
+            {
+                ActiveUnit = pUnit;
+                pUnit.ResetTurn();
+            }
+            else if (!current.IsPlayer && EnemyUnits.TryGetValue(current.Enemy, out var eUnit))
+            {
+                ActiveUnit = eUnit;
+                eUnit.ResetTurn();
+            }
+
             if (!current.IsPlayer)
             {
                 ExecuteEnemyTurn(current.Enemy);
@@ -140,6 +191,21 @@ namespace Schicksalswurf.Combat
                 AttackerName = attacker.Name,
                 DefenderName = target.Name
             };
+
+            // Check range on grid
+            if (PartyUnits.TryGetValue(attacker, out var attackerUnit) &&
+                EnemyUnits.TryGetValue(target, out var targetUnit))
+            {
+                int dist = Grid.Distance(attackerUnit.GridPosition, targetUnit.GridPosition);
+                if (dist > 2)
+                {
+                    result.Hit = false;
+                    result.Message = $"{attacker.Name} ist zu weit entfernt von {target.Name} (Distanz: {dist}).";
+                    Log.Add(result.Message);
+                    EndTurn();
+                    return result;
+                }
+            }
 
             int attackValue = attacker.GetAttackValue();
             int defenseValue = target.Defense;
@@ -177,6 +243,20 @@ namespace Schicksalswurf.Combat
 
         private void ExecuteEnemyTurn(Enemy enemy)
         {
+            // Move enemy toward nearest party member if too far
+            if (EnemyUnits.TryGetValue(enemy, out var enemyUnit))
+            {
+                var nearestParty = FindNearestPartyMember(enemyUnit.GridPosition);
+                if (nearestParty != null)
+                {
+                    int dist = Grid.Distance(enemyUnit.GridPosition, nearestParty.GridPosition);
+                    if (dist > 2 && enemyUnit.MovementPoints > 0)
+                    {
+                        MoveUnitToward(enemyUnit, nearestParty.GridPosition);
+                    }
+                }
+            }
+
             var targets = Party.AliveMembers.ToList();
             if (targets.Count == 0) return;
 
@@ -185,6 +265,70 @@ namespace Schicksalswurf.Combat
                 Log.Add(msg);
 
             EndTurn();
+        }
+
+        private CombatUnit FindNearestPartyMember(Vector2I fromPos)
+        {
+            CombatUnit nearest = null;
+            int minDist = int.MaxValue;
+            foreach (var kv in PartyUnits)
+            {
+                if (!kv.Value.IsAlive) continue;
+                int d = Grid.Distance(fromPos, kv.Value.GridPosition);
+                if (d < minDist) { minDist = d; nearest = kv.Value; }
+            }
+            return nearest;
+        }
+
+        private void MoveUnitToward(CombatUnit unit, Vector2I targetPos)
+        {
+            while (unit.MovementPoints > 0)
+            {
+                int dist = Grid.Distance(unit.GridPosition, targetPos);
+                if (dist <= 2) break;
+
+                var adjacent = Grid.GetAdjacentTiles(unit.GridPosition);
+                if (adjacent.Count == 0) break;
+
+                Vector2I best = adjacent[0];
+                int bestDist = Grid.Distance(best, targetPos);
+                foreach (var p in adjacent)
+                {
+                    int d = Grid.Distance(p, targetPos);
+                    if (d < bestDist) { bestDist = d; best = p; }
+                }
+
+                Grid.MoveUnit(unit, best);
+                unit.MovementPoints--;
+            }
+        }
+
+        public bool MovePlayerUnit(Character character, Vector2I newPos)
+        {
+            if (!PartyUnits.TryGetValue(character, out var unit)) return false;
+            if (unit.MovementPoints <= 0) return false;
+            if (Grid.IsOccupied(newPos)) return false;
+            if (!Grid.IsInBounds(newPos)) return false;
+
+            int dist = Grid.Distance(unit.GridPosition, newPos);
+            if (dist > unit.MovementPoints) return false;
+
+            Grid.MoveUnit(unit, newPos);
+            unit.MovementPoints -= dist;
+            Log.Add($"{character.Name} bewegt sich {dist} Felder.");
+            return true;
+        }
+
+        public List<Vector2I> GetMoveTilesForCurrentPlayer()
+        {
+            if (ActiveUnit == null || !ActiveUnit.IsPlayer) return new List<Vector2I>();
+            return Grid.GetTilesInRange(ActiveUnit.GridPosition, ActiveUnit.MovementPoints);
+        }
+
+        public List<CombatUnit> GetAttackTargetsForCurrentPlayer()
+        {
+            if (ActiveUnit == null || !ActiveUnit.IsPlayer) return new List<CombatUnit>();
+            return Grid.GetEnemiesInRange(ActiveUnit.GridPosition, 2);
         }
 
         public void PlayerDefend(Character character)
