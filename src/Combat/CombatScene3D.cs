@@ -147,67 +147,201 @@ namespace Schicksalswurf.Combat
             var root = new Node3D();
 
             var color = unit.IsPlayer ? PartyColor : (unit.Enemy?.IsBoss == true ? BossColor : EnemyColor);
+            var skinColor = new Color(color.R * 1.3f, color.G * 1.3f, color.B * 1.3f);
+            bool isBoss = unit.Enemy?.IsBoss == true;
+            float scale = isBoss ? 1.4f : 1.0f;
 
-            // Body (cylinder)
             var bodyMat = new StandardMaterial3D
             {
                 AlbedoColor = color,
                 Roughness = 0.6f
             };
-            var bodyMesh = new CylinderMesh { TopRadius = 0.4f, BottomRadius = 0.5f, Height = 1.2f };
+            var skinMat = new StandardMaterial3D
+            {
+                AlbedoColor = skinColor,
+                Roughness = 0.5f
+            };
+            var darkMat = new StandardMaterial3D
+            {
+                AlbedoColor = new Color(color.R * 0.6f, color.G * 0.6f, color.B * 0.6f),
+                Roughness = 0.7f
+            };
+
+            // Torso (capsule-like: tapered cylinder)
+            var bodyMesh = new CylinderMesh { TopRadius = 0.35f * scale, BottomRadius = 0.45f * scale, Height = 0.8f * scale };
             var bodyMi = new MeshInstance3D
             {
                 Mesh = bodyMesh,
                 MaterialOverride = bodyMat,
-                Position = new Vector3(0, 0.6f, 0)
+                Position = new Vector3(0, 0.8f * scale, 0)
             };
             root.AddChild(bodyMi);
 
-            // Head (sphere)
-            var headMat = new StandardMaterial3D
+            // Lower body / legs (box)
+            var legMesh = new BoxMesh { Size = new Vector3(0.5f * scale, 0.5f * scale, 0.4f * scale) };
+            var legMi = new MeshInstance3D
             {
-                AlbedoColor = new Color(color.R * 1.3f, color.G * 1.3f, color.B * 1.3f),
-                Roughness = 0.5f
+                Mesh = legMesh,
+                MaterialOverride = darkMat,
+                Position = new Vector3(0, 0.25f * scale, 0)
             };
-            var headMesh = new SphereMesh { Radius = 0.3f, Height = 0.6f };
+            root.AddChild(legMi);
+
+            // Head (sphere)
+            var headMesh = new SphereMesh { Radius = 0.25f * scale, Height = 0.5f * scale };
             var headMi = new MeshInstance3D
             {
                 Mesh = headMesh,
-                MaterialOverride = headMat,
-                Position = new Vector3(0, 1.5f, 0)
+                MaterialOverride = skinMat,
+                Position = new Vector3(0, 1.45f * scale, 0)
             };
             root.AddChild(headMi);
 
-            // Health bar above unit
-            var barBg = new ColorRect
+            // Left arm (cylinder)
+            var leftArmMesh = new CapsuleMesh { Radius = 0.12f * scale, Height = 0.6f * scale };
+            var leftArmMi = new MeshInstance3D
             {
-                Color = new Color(0.1f, 0.1f, 0.1f, 0.8f),
-                Size = new Vector2(1.2f, 0.15f),
-                Position = new Vector2(-0.6f, -0.1f)
+                Mesh = leftArmMesh,
+                MaterialOverride = skinMat,
+                Position = new Vector3(-0.45f * scale, 0.85f * scale, 0),
+                Rotation = new Vector3(0, 0, Mathf.DegToRad(15))
             };
-            var barFill = new ColorRect
-            {
-                Color = unit.IsPlayer ? new Color(0.2f, 0.8f, 0.2f) : new Color(0.8f, 0.2f, 0.1f),
-                Size = new Vector2(1.2f, 0.15f),
-                Position = new Vector2(-0.6f, -0.1f)
-            };
-            var barRoot = new Control
-            {
-                Size = new Vector2(1.2f, 0.15f)
-            };
-            barRoot.AddChild(barBg);
-            barRoot.AddChild(barFill);
+            root.AddChild(leftArmMi);
 
-            // Use a Sprite3D-like approach with a SubViewport would be complex;
-            // instead, scale the fill based on health
+            // Right arm (cylinder)
+            var rightArmMesh = new CapsuleMesh { Radius = 0.12f * scale, Height = 0.6f * scale };
+            var rightArmMi = new MeshInstance3D
+            {
+                Mesh = rightArmMesh,
+                MaterialOverride = skinMat,
+                Position = new Vector3(0.45f * scale, 0.85f * scale, 0),
+                Rotation = new Vector3(0, 0, Mathf.DegToRad(-15))
+            };
+            root.AddChild(rightArmMi);
+
+            // Weapon (box for sword/axe) in right hand
+            var weaponMat = new StandardMaterial3D
+            {
+                AlbedoColor = new Color(0.7f, 0.7f, 0.75f),
+                Metallic = 0.8f,
+                Roughness = 0.3f
+            };
+            var weaponMesh = new BoxMesh { Size = new Vector3(0.08f * scale, 0.7f * scale, 0.02f * scale) };
+            var weaponMi = new MeshInstance3D
+            {
+                Mesh = weaponMesh,
+                MaterialOverride = weaponMat,
+                Position = new Vector3(0.55f * scale, 1.1f * scale, 0.1f * scale),
+                Rotation = new Vector3(Mathf.DegToRad(-20), 0, Mathf.DegToRad(-10)),
+                Name = "Weapon"
+            };
+            root.AddChild(weaponMi);
+
+            // Shield on left arm for players
+            if (unit.IsPlayer)
+            {
+                var shieldMat = new StandardMaterial3D
+                {
+                    AlbedoColor = new Color(color.R * 0.8f, color.G * 0.8f, color.B * 1.2f),
+                    Metallic = 0.3f,
+                    Roughness = 0.5f
+                };
+                var shieldMesh = new BoxMesh { Size = new Vector3(0.05f, 0.5f, 0.35f) };
+                var shieldMi = new MeshInstance3D
+                {
+                    Mesh = shieldMesh,
+                    MaterialOverride = shieldMat,
+                    Position = new Vector3(-0.55f, 0.85f, 0.05f),
+                    Rotation = new Vector3(0, Mathf.DegToRad(10), 0),
+                    Name = "Shield"
+                };
+                root.AddChild(shieldMi);
+            }
+
+            // Boss: add horns and cape
+            if (isBoss)
+            {
+                var hornMat = new StandardMaterial3D
+                {
+                    AlbedoColor = new Color(0.1f, 0.05f, 0.03f),
+                    Roughness = 0.4f
+                };
+                // Left horn (cone via cylinder with top radius 0)
+                var leftHornMesh = new CylinderMesh { TopRadius = 0.0f, BottomRadius = 0.08f, Height = 0.25f };
+                var leftHornMi = new MeshInstance3D
+                {
+                    Mesh = leftHornMesh,
+                    MaterialOverride = hornMat,
+                    Position = new Vector3(-0.15f, 1.7f, 0),
+                    Rotation = new Vector3(0, 0, Mathf.DegToRad(-30))
+                };
+                root.AddChild(leftHornMi);
+                // Right horn (cone via cylinder with top radius 0)
+                var rightHornMesh = new CylinderMesh { TopRadius = 0.0f, BottomRadius = 0.08f, Height = 0.25f };
+                var rightHornMi = new MeshInstance3D
+                {
+                    Mesh = rightHornMesh,
+                    MaterialOverride = hornMat,
+                    Position = new Vector3(0.15f, 1.7f, 0),
+                    Rotation = new Vector3(0, 0, Mathf.DegToRad(30))
+                };
+                root.AddChild(rightHornMi);
+
+                // Cape (box behind body)
+                var capeMat = new StandardMaterial3D
+                {
+                    AlbedoColor = new Color(0.3f, 0.05f, 0.05f),
+                    Roughness = 0.8f
+                };
+                var capeMesh = new BoxMesh { Size = new Vector3(0.6f, 1.0f, 0.05f) };
+                var capeMi = new MeshInstance3D
+                {
+                    Mesh = capeMesh,
+                    MaterialOverride = capeMat,
+                    Position = new Vector3(0, 0.8f, -0.25f)
+                };
+                root.AddChild(capeMi);
+            }
+
+            // Health bar above unit (using 3D meshes)
             float healthPct = (float)unit.CurrentHealth / unit.MaxHealth;
-            barFill.Size = new Vector2(1.2f * healthPct, 0.15f);
+            var hpBgMat = new StandardMaterial3D
+            {
+                AlbedoColor = new Color(0.1f, 0.1f, 0.1f, 0.9f),
+                CullMode = BaseMaterial3D.CullModeEnum.Disabled
+            };
+            var hpBgMesh = new BoxMesh { Size = new Vector3(1.2f, 0.12f, 0.02f) };
+            var hpBgMi = new MeshInstance3D
+            {
+                Mesh = hpBgMesh,
+                MaterialOverride = hpBgMat,
+                Position = new Vector3(0, 2.0f * scale, 0),
+                Name = "HealthBarBg"
+            };
+            root.AddChild(hpBgMi);
+
+            var hpFillMat = new StandardMaterial3D
+            {
+                AlbedoColor = unit.IsPlayer ? new Color(0.2f, 0.8f, 0.2f) : new Color(0.8f, 0.2f, 0.1f),
+                Emission = unit.IsPlayer ? new Color(0.1f, 0.4f, 0.1f) : new Color(0.4f, 0.1f, 0.05f),
+                EmissionEnergyMultiplier = 0.5f,
+                CullMode = BaseMaterial3D.CullModeEnum.Disabled
+            };
+            var hpFillMesh = new BoxMesh { Size = new Vector3(Mathf.Max(0.01f, 1.2f * healthPct), 0.12f, 0.03f) };
+            var hpFillMi = new MeshInstance3D
+            {
+                Mesh = hpFillMesh,
+                MaterialOverride = hpFillMat,
+                Position = new Vector3(-0.6f + 0.6f * healthPct, 2.0f * scale, 0.01f),
+                Name = "HealthBarFill"
+            };
+            root.AddChild(hpFillMi);
 
             // Name label via Label3D
             var label = new Label3D
             {
                 Text = unit.Name,
-                Position = new Vector3(0, 2.2f, 0),
+                Position = new Vector3(0, 2.4f * scale, 0),
                 FontSize = 24,
                 Modulate = unit.IsPlayer ? new Color(0.6f, 0.8f, 1.0f) : new Color(1.0f, 0.5f, 0.4f)
             };
@@ -220,7 +354,7 @@ namespace Schicksalswurf.Combat
                 Emission = new Color(1.0f, 0.9f, 0.2f),
                 EmissionEnergyMultiplier = 1.0f
             };
-            var ringMesh = new CylinderMesh { TopRadius = 0.7f, BottomRadius = 0.7f, Height = 0.05f };
+            var ringMesh = new CylinderMesh { TopRadius = 0.7f * scale, BottomRadius = 0.7f * scale, Height = 0.05f };
             var ringMi = new MeshInstance3D
             {
                 Mesh = ringMesh,
@@ -321,11 +455,22 @@ namespace Schicksalswurf.Combat
             {
                 if (_unitNodes.TryGetValue(kv.Key, out var node))
                 {
+                    float pct = (float)kv.Value.CurrentHealth / kv.Value.MaxHealth;
+                    bool isBoss = kv.Value.Enemy?.IsBoss == true;
+                    float scale = isBoss ? 1.4f : 1.0f;
+
+                    // Update health bar fill mesh
+                    var fillMi = node.GetNodeOrNull<MeshInstance3D>("HealthBarFill");
+                    if (fillMi != null && fillMi.Mesh is BoxMesh box)
+                    {
+                        box.Size = new Vector3(Mathf.Max(0.01f, 1.2f * pct), 0.12f, 0.03f);
+                        fillMi.Position = new Vector3(-0.6f + 0.6f * pct, 2.0f * scale, 0.01f);
+                    }
+
                     // Update label color based on health
                     var label = node.GetNodeOrNull<Label3D>("Label3D");
                     if (label != null)
                     {
-                        float pct = (float)kv.Value.CurrentHealth / kv.Value.MaxHealth;
                         if (pct < 0.3f)
                             label.Modulate = new Color(1.0f, 0.3f, 0.3f);
                         else if (pct < 0.6f)

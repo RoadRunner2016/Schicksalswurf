@@ -250,7 +250,14 @@ namespace Schicksalswurf.UI
 
             var result = _combat.PlayerAttack(current.Character, target);
             if (result.Hit)
-                Sound?.PlayCombatHit();
+            {
+                if (result.Critical)
+                    Sound?.PlayCriticalHit();
+                else
+                    Sound?.PlayCombatHit();
+                if (!target.IsAlive)
+                    Sound?.PlayEnemyDeath();
+            }
             else
                 Sound?.PlayCombatMiss();
             AfterAction();

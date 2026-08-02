@@ -972,8 +972,11 @@ namespace Schicksalswurf.Dungeon
             if (_currentLevel % 3 == 0 && GD.Randf() < 0.5f)
             {
                 var bossTemplate = Enemy.Bosses[GD.RandRange(0, Enemy.Bosses.Count - 1)];
-                encounter.AddEnemy(bossTemplate);
+                var boss = Enemy.Clone(bossTemplate);
+                ScaleEnemyToLevel(boss, _currentLevel);
+                encounter.AddEnemy(boss);
                 ShowMessage("Ein mächtiger Gegner erscheint!");
+                CombatUI.Sound?.PlayBossRoar();
             }
             else
             {
@@ -984,7 +987,9 @@ namespace Schicksalswurf.Dungeon
                 for (int i = 0; i < enemyCount; i++)
                 {
                     var template = Enemy.Bestiary[GD.RandRange(0, maxIdx)];
-                    encounter.AddEnemy(template);
+                    var enemy = Enemy.Clone(template);
+                    ScaleEnemyToLevel(enemy, _currentLevel);
+                    encounter.AddEnemy(enemy);
                 }
 
                 ShowMessage($"Kampf! {enemyCount} Gegner erscheinen!");
@@ -1145,6 +1150,29 @@ namespace Schicksalswurf.Dungeon
 
             ShowMessage("Spielstand geladen.");
             UpdateDisplay();
+        }
+
+        private static void ScaleEnemyToLevel(Enemy enemy, int dungeonLevel)
+        {
+            if (dungeonLevel <= 1) return;
+            int scale = dungeonLevel - enemy.Level;
+            if (scale <= 0) return;
+
+            // Scale HP by 20% per level above enemy's base level
+            int hpBonus = enemy.MaxHealth * scale / 5;
+            enemy.MaxHealth += hpBonus;
+            enemy.Health = enemy.MaxHealth;
+
+            // Scale attack and damage by 10% per level
+            enemy.Attack += scale;
+            enemy.Damage += scale / 2;
+
+            // Scale defense slightly
+            enemy.Defense += scale / 3;
+
+            // Scale rewards
+            enemy.ExperienceReward += enemy.ExperienceReward * scale / 4;
+            enemy.GoldReward += enemy.GoldReward * scale / 4;
         }
     }
 }

@@ -31,13 +31,39 @@ namespace Schicksalswurf.Core
         public void PlayCombatHit()
         {
             if (!_enabled) return;
-            PlayTone(200, 0.1f, 0.3f);
+            PlayNoiseBurst(0.15f, 0.4f, 800);
         }
 
         public void PlayCombatMiss()
         {
             if (!_enabled) return;
-            PlayTone(400, 0.05f, 0.1f);
+            PlaySweep(600, 200, 0.12f, 0.15f);
+        }
+
+        public void PlayCriticalHit()
+        {
+            if (!_enabled) return;
+            PlayNoiseBurst(0.25f, 0.5f, 1200);
+            PlayTone(880, 0.15f, 0.3f);
+        }
+
+        public void PlayEnemyDeath()
+        {
+            if (!_enabled) return;
+            PlaySweep(400, 50, 0.4f, 0.35f);
+        }
+
+        public void PlayPlayerHurt()
+        {
+            if (!_enabled) return;
+            PlaySweep(300, 100, 0.2f, 0.3f);
+        }
+
+        public void PlayBossRoar()
+        {
+            if (!_enabled) return;
+            PlaySweep(80, 200, 0.6f, 0.5f);
+            PlayNoiseBurst(0.3f, 0.2f, 400);
         }
 
         public void PlayChestOpen()
@@ -55,13 +81,15 @@ namespace Schicksalswurf.Core
         public void PlaySpellCast()
         {
             if (!_enabled) return;
-            PlayTone(600, 0.15f, 0.25f);
+            PlaySweep(200, 800, 0.25f, 0.25f);
         }
 
         public void PlayLevelUp()
         {
             if (!_enabled) return;
             PlayTone(440, 0.1f, 0.3f);
+            PlayTone(554, 0.1f, 0.25f);
+            PlayTone(659, 0.2f, 0.25f);
         }
 
         public void PlayTrap()
@@ -97,6 +125,66 @@ namespace Schicksalswurf.Core
                 float envelope = 1.0f - (float)i / samples;
                 float sample = Mathf.Sin(2 * Mathf.Pi * frequency * t) * envelope * volume;
                 buffer[i] = new Vector2(sample, sample);
+            }
+
+            var stream = new AudioStreamWav
+            {
+                Format = AudioStreamWav.FormatEnum.Format16Bits,
+                MixRate = sampleRate,
+                Stereo = true,
+                Data = FloatArrayToByteArray(buffer)
+            };
+
+            _sfxPlayer.Stream = stream;
+            _sfxPlayer.Play();
+        }
+
+        private void PlaySweep(float startFreq, float endFreq, float duration, float volume)
+        {
+            var sampleRate = 44100;
+            int samples = (int)(sampleRate * duration);
+            var buffer = new Vector2[samples];
+
+            for (int i = 0; i < samples; i++)
+            {
+                float progress = (float)i / samples;
+                float freq = startFreq + (endFreq - startFreq) * progress;
+                float t = (float)i / sampleRate;
+                float envelope = Mathf.Sin(Mathf.Pi * progress);
+                float sample = Mathf.Sin(2 * Mathf.Pi * freq * t) * envelope * volume;
+                buffer[i] = new Vector2(sample, sample);
+            }
+
+            var stream = new AudioStreamWav
+            {
+                Format = AudioStreamWav.FormatEnum.Format16Bits,
+                MixRate = sampleRate,
+                Stereo = true,
+                Data = FloatArrayToByteArray(buffer)
+            };
+
+            _sfxPlayer.Stream = stream;
+            _sfxPlayer.Play();
+        }
+
+        private void PlayNoiseBurst(float duration, float volume, float cutoff)
+        {
+            var sampleRate = 44100;
+            int samples = (int)(sampleRate * duration);
+            var buffer = new Vector2[samples];
+            var rng = new RandomNumberGenerator();
+            rng.Randomize();
+
+            float prevSample = 0f;
+            float alpha = cutoff / sampleRate;
+            alpha = Mathf.Clamp(alpha, 0f, 1f);
+
+            for (int i = 0; i < samples; i++)
+            {
+                float envelope = 1.0f - (float)i / samples;
+                float noise = (rng.Randf() * 2f - 1f) * envelope * volume;
+                prevSample = prevSample + alpha * (noise - prevSample);
+                buffer[i] = new Vector2(prevSample, prevSample);
             }
 
             var stream = new AudioStreamWav
