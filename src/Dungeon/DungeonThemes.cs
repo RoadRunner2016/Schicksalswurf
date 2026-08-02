@@ -10,7 +10,10 @@ namespace Schicksalswurf.Dungeon
         Verlies,    // Dungeon - stone walls
         Hoehle,     // Cave - natural walls
         Turm,       // Tower - vertical layout
-        Katakomben  // Catacombs - narrow corridors
+        Katakomben, // Catacombs - narrow corridors
+        Hoellenfestung, // Hell fortress - fiery
+        Eisgruft,   // Ice crypt - frozen
+        Tempel      // Temple - ancient ruins
     }
 
     public class DungeonTheme
@@ -98,19 +101,72 @@ namespace Schicksalswurf.Dungeon
             EnemyPool = new[] { "Skeleton", "Riesenspinne", "Dunkler Magier" }
         };
 
+        public static readonly DungeonTheme Hoellenfestung = new()
+        {
+            Type = DungeonType.Hoellenfestung,
+            Name = "Höllenfestung",
+            Description = "Eine Festung aus Feuer und Asche.",
+            MinRoomSize = 3, MaxRoomSize = 6, MaxRooms = 14,
+            ChestChance = 0.14f, TrapChance = 0.10f, EncounterRate = 0.25f,
+            WallColor = new(0.5f, 0.2f, 0.1f),
+            FloorColor = new(0.25f, 0.1f, 0.05f),
+            CeilingColor = new(0.15f, 0.05f, 0.02f),
+            AmbientColor = new(0.4f, 0.2f, 0.1f),
+            FogDensity = 0.6f,
+            EnemyPool = new[] { "Dämon", "Nekromant", "Vampir" }
+        };
+
+        public static readonly DungeonTheme Eisgruft = new()
+        {
+            Type = DungeonType.Eisgruft,
+            Name = "Eisgruft",
+            Description = "Eisige Krypta aus ewigem Frost.",
+            MinRoomSize = 3, MaxRoomSize = 6, MaxRooms = 12,
+            ChestChance = 0.12f, TrapChance = 0.08f, EncounterRate = 0.20f,
+            WallColor = new(0.2f, 0.3f, 0.4f),
+            FloorColor = new(0.1f, 0.15f, 0.2f),
+            CeilingColor = new(0.05f, 0.1f, 0.15f),
+            AmbientColor = new(0.2f, 0.3f, 0.4f),
+            FogDensity = 0.9f,
+            EnemyPool = new[] { "Geist", "Gargoyle", "Nekromant" }
+        };
+
+        public static readonly DungeonTheme Tempel = new()
+        {
+            Type = DungeonType.Tempel,
+            Name = "Alter Tempel",
+            Description = "Ein uralter Tempel mit geheimnisvollen Siegeln.",
+            MinRoomSize = 4, MaxRoomSize = 8, MaxRooms = 10,
+            ChestChance = 0.18f, TrapChance = 0.14f, EncounterRate = 0.22f,
+            WallColor = new(0.45f, 0.4f, 0.25f),
+            FloorColor = new(0.25f, 0.2f, 0.12f),
+            CeilingColor = new(0.15f, 0.12f, 0.08f),
+            AmbientColor = new(0.35f, 0.3f, 0.18f),
+            FogDensity = 0.5f,
+            EnemyPool = new[] { "Ghoul", "Necromant", "Lichkoenig" }
+        };
+
         public static DungeonTheme GetTheme(DungeonType type) => type switch
         {
             DungeonType.Verlies => Verlies,
             DungeonType.Hoehle => Hoehle,
             DungeonType.Turm => Turm,
             DungeonType.Katakomben => Katakomben,
+            DungeonType.Hoellenfestung => Hoellenfestung,
+            DungeonType.Eisgruft => Eisgruft,
+            DungeonType.Tempel => Tempel,
             _ => Verlies
         };
 
         public static DungeonTheme GetThemeByLevel(int level)
         {
-            // Cycle through themes every 3 levels
-            int idx = (level - 1) / 3 % 4;
+            // Cycle through themes every 2 levels, deeper themes at higher levels
+            if (level >= 15)
+            {
+                int deepIdx = (level - 15) / 3 % 3;
+                return deepIdx switch { 0 => Hoellenfestung, 1 => Eisgruft, 2 => Tempel, _ => Hoellenfestung };
+            }
+            int idx = (level - 1) / 2 % 4;
             return idx switch
             {
                 0 => Verlies,

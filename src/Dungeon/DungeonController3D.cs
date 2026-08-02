@@ -148,8 +148,8 @@ namespace Schicksalswurf.Dungeon
             _messageLabel = new Label();
             _messageLabel.AnchorRight = 1.0f;
             _messageLabel.AnchorLeft = 0.0f;
-            _messageLabel.Position = new Vector2(0, 660);
-            _messageLabel.Size = new Vector2(1280, 40);
+            _messageLabel.OffsetTop = 660;
+            _messageLabel.OffsetBottom = 700;
             _messageLabel.HorizontalAlignment = HorizontalAlignment.Center;
             _messageLabel.AddThemeFontSizeOverride("font_size", 18);
             _messageLabel.AddThemeColorOverride("font_color", new Color(1, 0.9f, 0.6f));
@@ -157,8 +157,10 @@ namespace Schicksalswurf.Dungeon
 
             // Party status label (bottom-left)
             _partyLabel = new Label();
-            _partyLabel.Position = new Vector2(10, 660);
-            _partyLabel.Size = new Vector2(400, 50);
+            _partyLabel.OffsetLeft = 10;
+            _partyLabel.OffsetTop = 660;
+            _partyLabel.OffsetRight = 410;
+            _partyLabel.OffsetBottom = 720;
             _partyLabel.AddThemeFontSizeOverride("font_size", 13);
             _partyLabel.AddThemeColorOverride("font_color", new Color(0.8f, 0.8f, 0.8f));
             _uiLayer.AddChild(_partyLabel);

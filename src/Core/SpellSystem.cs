@@ -166,6 +166,48 @@ namespace Schicksalswurf.Core
             Register("wiederbeleben", "Wiederbeleben", "Weckt einen gefallenen Verbündeten wieder auf.",
                 30, 6, SpellEffect.Heal, SpellTarget.Ally, DamageType.Magical, 50,
                 Attribute.Willenskraft, Attribute.Willenskraft, Attribute.Charisma);
+
+            // Extended high-level spells
+            Register("feuersturm", "Feuersturm", "Ein Sturm aus Feuer verwuestet alle Gegner.",
+                35, 7, SpellEffect.Damage, SpellTarget.AllEnemies, DamageType.Fire, 30,
+                Attribute.Intelligenz, Attribute.Willenskraft, Attribute.Wahrnehmung);
+
+            Register("eisgefängnis", "Eisgefängnis", "Einschliessung eines Gegners in Eis.",
+                18, 5, SpellEffect.Debuff, SpellTarget.Enemy, DamageType.Cold, 10,
+                Attribute.Intelligenz, Attribute.Willenskraft, Attribute.Wahrnehmung,
+                buffAmount: 3, buffDuration: 3);
+
+            Register("heilige_aura", "Heilige Aura", "Heilt die gesamte Gruppe leicht.",
+                25, 6, SpellEffect.Heal, SpellTarget.AllAllies, DamageType.Magical, 20,
+                Attribute.Willenskraft, Attribute.Charisma, Attribute.Wahrnehmung);
+
+            Register("schattenklinge", "Schattenklinge", "Verdunkelt die Waffe eines Verbündeten mit Schatten.",
+                15, 4, SpellEffect.Buff, SpellTarget.Ally, DamageType.Magical, 0,
+                Attribute.Intelligenz, Attribute.Willenskraft, Attribute.Charisma,
+                buffAmount: 6, buffDuration: 5);
+
+            Register("vergeltung", "Vergeltung", "Schaden wird auf den Angreifer zurueckgeworfen.",
+                20, 5, SpellEffect.Shield, SpellTarget.Ally, DamageType.Magical, 0,
+                Attribute.Willenskraft, Attribute.Konstitution, Attribute.Charisma,
+                buffAmount: 5, buffDuration: 3);
+
+            Register("apokalypse", "Apokalypse", "Verursacht massiven Schaden an allen Gegnern.",
+                50, 8, SpellEffect.Damage, SpellTarget.AllEnemies, DamageType.Fire, 50,
+                Attribute.Intelligenz, Attribute.Willenskraft, Attribute.Charisma);
+
+            Register("gottesschild", "Gottesschild", "Macht einen Verbündeten kurzzeitig unverwundbar.",
+                40, 7, SpellEffect.Shield, SpellTarget.Ally, DamageType.Magical, 0,
+                Attribute.Willenskraft, Attribute.Charisma, Attribute.Charisma,
+                buffAmount: 10, buffDuration: 2);
+
+            Register("mana_explosion", "Manaexplosion", "Opfert Mana fuer massiven Schaden.",
+                45, 7, SpellEffect.Damage, SpellTarget.AllEnemies, DamageType.Arcane, 40,
+                Attribute.Intelligenz, Attribute.Willenskraft, Attribute.Konstitution);
+
+            Register("verwandlung", "Verwandlung", "Verwandelt einen Gegner in einen Frosch.",
+                22, 5, SpellEffect.Debuff, SpellTarget.Enemy, DamageType.Magical, 0,
+                Attribute.Intelligenz, Attribute.Charisma, Attribute.Wahrnehmung,
+                buffAmount: 5, buffDuration: 2);
         }
 
         private static void Register(string id, string name, string desc, int mana, int lvl,

@@ -43,11 +43,21 @@ namespace Schicksalswurf.Characters
         public static readonly Weapon ShortBow = new("short_bow", "Kurzbogen", 5, 2, 40, true);
         public static readonly Weapon LongBow = new("long_bow", "Langbogen", 7, 3, 70, true);
         public static readonly Weapon Crossbow = new("crossbow", "Armbrust", 9, 1, 100, true);
+        // Extended weapons
+        public static readonly Weapon WarHammer = new("war_hammer", "Kriegshammer", 12, 1, 120);
+        public static readonly Weapon Halberd = new("halberd", "Hellebarde", 11, 2, 110);
+        public static readonly Weapon MagicSword = new("magic_sword", "Verzaubertes Schwert", 10, 3, 200, false, DamageType.Arcane);
+        public static readonly Weapon FireStaff = new("fire_staff", "Feuerstab", 6, 2, 150, false, DamageType.Fire);
+        public static readonly Weapon IceDagger = new("ice_dagger", "Eisdolch", 5, 2, 90, false, DamageType.Cold);
+        public static readonly Weapon PoisonSword = new("poison_sword", "Giftklinge", 7, 2, 130, false, DamageType.Poison);
+        public static readonly Weapon DragonSlayer = new("dragon_slayer", "Drachenschlacht", 15, 4, 500, false, DamageType.Physical);
+        public static readonly Weapon DemonBow = new("demon_bow", "Dämonenbogen", 12, 4, 350, true, DamageType.Fire);
 
         public static readonly List<Weapon> All = new()
         {
             Dagger, ShortSword, LongSword, BattleAxe, Staff,
-            ShortBow, LongBow, Crossbow
+            ShortBow, LongBow, Crossbow,
+            WarHammer, Halberd, MagicSword, FireStaff, IceDagger, PoisonSword, DragonSlayer, DemonBow
         };
     }
 
@@ -72,10 +82,15 @@ namespace Schicksalswurf.Characters
         public static readonly Armor Leather = new("leather", "Lederrüstung", 1, 1, 25);
         public static readonly Armor Chain = new("chain", "Kettenhemd", 2, 2, 60);
         public static readonly Armor Plate = new("plate", "Plattenrüstung", 4, 1, 150);
+        // Extended armor
+        public static readonly Armor DragonScale = new("dragon_scale", "Drachenschuppenrüstung", 6, 3, 400);
+        public static readonly Armor MageRobe = new("mage_robe", "Magiergewand", 1, 3, 80);
+        public static readonly Armor ShadowCloak = new("shadow_cloak", "Schattenumhang", 2, 4, 200);
+        public static readonly Armor DemonArmor = new("demon_armor", "Dämonenrüstung", 7, 2, 500);
 
         public static readonly List<Armor> All = new()
         {
-            Cloth, Leather, Chain, Plate
+            Cloth, Leather, Chain, Plate, DragonScale, MageRobe, ShadowCloak, DemonArmor
         };
     }
 
@@ -120,5 +135,20 @@ namespace Schicksalswurf.Characters
         public static readonly Item Fleisch = new("fleisch", "Geroechertes Fleisch", "Stillt Hunger", 4, true);
         public static readonly Item Brot = new("brot", "Brot", "Frisches Brot, stillt Hunger", 2, true);
         public static readonly Item Wasserflasche = new("wasserflasche", "Wasserflasche", "Stillt Durst", 2, true);
+        // Extended consumables
+        public static readonly Item ElixirOfLife = new("elixir_of_life", "Elixier des Lebens", "Stellt 80 HP wieder her", 120, true);
+        public static readonly Item ManaElixir = new("mana_elixir", "Manaelixir", "Stellt 40 MP wieder her", 80, true);
+        public static readonly Item Antidote = new("antidote", "Gegengift", "Heilt Vergiftung", 25, true);
+        public static readonly Item Bomb = new("bomb", "Sprengsatz", "Verursacht 20 Schaden an allen Gegnern", 50, true);
+        public static readonly Item ScrollOfEscape = new("scroll_escape", "Schriftrolle der Flucht", "Teleportiert aus dem Dungeon", 100, true);
+        // Extended crafting ingredients
+        public static readonly Item Drachenschuppe = new("drachenschuppe", "Drachenschuppe", "Seltenes Material", 50);
+        public static readonly Item Dämonenblut = new("dämonenblut", "Dämonenblut", "Mächtige Zutat für dunkle Tränke", 40);
+        public static readonly Item Goldbarren = new("goldbarren", "Goldbarren", "Wertvolles Metall", 100);
+        public static readonly Item Edelstein = new("edelstein", "Edelstein", "Wertvoller Stein", 75);
+        // Treasure
+        public static readonly Item Silbermünze = new("silbermünze", "Silbermünze", "Kleine Münze", 1);
+        public static readonly Item Goldmünze = new("goldmünze", "Goldmünze", "Münze aus reinem Gold", 10);
+        public static readonly Item Juwel = new("juwel", "Juwel", "Funkelnder Edelstein", 200);
     }
 }

@@ -186,6 +186,81 @@ namespace Schicksalswurf.Dungeon
                 TargetEnemy = "Lichkoenig",
                 TargetCount = 1
             });
+
+            _allQuests.Add(new Quest
+            {
+                Id = "kill_demon_lord",
+                Title = "Der Letzte Kampf",
+                Description = "Besiege den Daemonenfuerst und rette die Welt.",
+                GoldReward = 600,
+                ExpReward = 1200,
+                TargetEnemy = "Daemonenfuerst",
+                TargetCount = 1
+            });
+
+            _allQuests.Add(new Quest
+            {
+                Id = "kill_vampires",
+                Title = "Blutjuenger",
+                Description = "Befreie die Dungeons von 5 Vampiren.",
+                GoldReward = 250,
+                ExpReward = 400,
+                TargetEnemy = "Vampir",
+                TargetCount = 5
+            });
+
+            _allQuests.Add(new Quest
+            {
+                Id = "kill_wraiths",
+                Title = "Geisterjaeger",
+                Description = "Vernichte 4 Geister in den tiefen Ebenen.",
+                GoldReward = 180,
+                ExpReward = 300,
+                TargetEnemy = "Geist",
+                TargetCount = 4
+            });
+
+            _allQuests.Add(new Quest
+            {
+                Id = "clear_level_10",
+                Title = "Tiefenschaechte",
+                Description = "Erreiche Ebene 10 des Dungeons.",
+                GoldReward = 300,
+                ExpReward = 500,
+                TargetLevel = 10
+            });
+
+            _allQuests.Add(new Quest
+            {
+                Id = "clear_level_20",
+                Title = "Abgrund",
+                Description = "Erreiche die tiefste Ebene (20).",
+                GoldReward = 800,
+                ExpReward = 1500,
+                TargetLevel = 20
+            });
+
+            _allQuests.Add(new Quest
+            {
+                Id = "kill_demons",
+                Title = "Dämonenjäger",
+                Description = "Besiege 3 Dämonen in der Höllenfestung.",
+                GoldReward = 350,
+                ExpReward = 600,
+                TargetEnemy = "Dämon",
+                TargetCount = 3
+            });
+
+            _allQuests.Add(new Quest
+            {
+                Id = "kill_gargoyles",
+                Title = "Steinbrecher",
+                Description = "Zerstöre 4 Gargoyles.",
+                GoldReward = 200,
+                ExpReward = 350,
+                TargetEnemy = "Gargoyle",
+                TargetCount = 4
+            });
         }
 
         public static void StartQuest(string id)
