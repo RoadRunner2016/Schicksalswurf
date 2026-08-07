@@ -16,12 +16,14 @@ namespace Schicksalswurf.UI
         private Label _titleLabel;
         private Label _subtitleLabel;
         private Label _versionLabel;
+        private TextureRect _background;
+        private float _bgTime = 0f;
 
         public bool StartRequested { get; private set; } = false;
         public bool LoadRequested { get; private set; } = false;
         public System.Action SettingsRequested { get; set; }
 
-        private static readonly Color PanelBg = new(0.03f, 0.03f, 0.06f, 0.98f);
+        private static readonly Color PanelBg = new(0.03f, 0.03f, 0.06f, 0.85f);
         private static readonly Color BorderColor = new(0.45f, 0.35f, 0.12f, 0.9f);
         private static readonly Color HeaderColor = new(0.95f, 0.78f, 0.28f);
         private static readonly Color TextColor = new(0.88f, 0.85f, 0.72f);
@@ -34,7 +36,47 @@ namespace Schicksalswurf.UI
         {
             SetAnchorsPreset(Control.LayoutPreset.FullRect);
             MouseFilter = MouseFilterEnum.Stop;
+            BuildBackground();
             BuildUI();
+        }
+
+        public override void _Process(double delta)
+        {
+            _bgTime += (float)delta;
+            // Subtle parallax drift on the background
+            if (_background != null)
+            {
+                float offsetX = Mathf.Sin(_bgTime * 0.1f) * 8f;
+                float offsetY = Mathf.Cos(_bgTime * 0.08f) * 4f;
+                _background.Position = new Vector2(offsetX, offsetY);
+            }
+        }
+
+        private void BuildBackground()
+        {
+            _background = new TextureRect();
+            _background.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+            _background.ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize;
+            _background.StretchMode = TextureRect.StretchModeEnum.Scale;
+            _background.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            _background.SizeFlagsVertical = SizeFlags.ExpandFill;
+
+            // Load SVG from assets folder
+            var svgPath = "res://assets/menu_background.svg";
+            if (ResourceLoader.Exists(svgPath))
+            {
+                var tex = ResourceLoader.Load<Texture2D>(svgPath);
+                if (tex != null)
+                    _background.Texture = tex;
+            }
+
+            // Oversize slightly so parallax drift doesn't show edges
+            _background.OffsetLeft = -20;
+            _background.OffsetTop = -20;
+            _background.OffsetRight = 20;
+            _background.OffsetBottom = 20;
+
+            AddChild(_background);
         }
 
         private StyleBoxFlat CreateButtonStyle(Color bg)
@@ -54,6 +96,7 @@ namespace Schicksalswurf.UI
 
         private void BuildUI()
         {
+            // Semi-transparent overlay panel so background is visible through it
             _mainPanel = new PanelContainer();
             _mainPanel.SetAnchorsPreset(Control.LayoutPreset.FullRect);
             _mainPanel.AddThemeStyleboxOverride("panel", new StyleBoxFlat
