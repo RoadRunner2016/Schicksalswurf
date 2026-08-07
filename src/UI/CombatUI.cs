@@ -49,6 +49,9 @@ namespace Schicksalswurf.UI
         private static readonly Color EnemyColor = new(0.9f, 0.3f, 0.3f);
         private static readonly Color SelectedColor = new(1.0f, 0.85f, 0.2f);
 
+        // Static settings access for damage numbers
+        public static bool ShowDamageNumbersSetting { get; set; } = true;
+
         public override void _Ready()
         {
             SetAnchorsPreset(Control.LayoutPreset.FullRect);
@@ -257,6 +260,7 @@ namespace Schicksalswurf.UI
                     Sound?.PlayCombatHit();
                 if (!target.IsAlive)
                     Sound?.PlayEnemyDeath();
+                ShowDamagePopup($"-{result.NetDamage}", result.Critical);
             }
             else
                 Sound?.PlayCombatMiss();
@@ -357,6 +361,9 @@ namespace Schicksalswurf.UI
             _combat.Log.Add(result.Message);
 
             Sound?.PlaySpellCast();
+
+            if (result.Success && result.EffectAmount > 0)
+                ShowDamagePopup($"-{result.EffectAmount}", false);
 
             // Apply status effects from certain spells
             if (result.Success && target is Enemy enemy)
@@ -589,6 +596,37 @@ namespace Schicksalswurf.UI
 
                 _combatLog.AppendText(colored + "\n");
             }
+        }
+
+        private void ShowDamagePopup(string text, bool critical)
+        {
+            if (!ShowDamageNumbersSetting) return;
+
+            var popup = new Label { Text = text };
+            popup.HorizontalAlignment = HorizontalAlignment.Center;
+            popup.AddThemeFontSizeOverride("font_size", critical ? 28 : 20);
+            popup.AddThemeColorOverride("font_color", critical ? new Color(1f, 0.85f, 0.1f) : new Color(1f, 0.4f, 0.2f));
+            popup.AddThemeColorOverride("font_shadow_color", new Color(0, 0, 0, 0.8f));
+            popup.AddThemeConstantOverride("shadow_offset_x", 2);
+            popup.AddThemeConstantOverride("shadow_offset_y", 2);
+            popup.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+            popup.Position = new Vector2(
+                (int)(GetViewport().GetVisibleRect().Size.X * 0.5f) + GD.RandRange(-60, 60),
+                (int)(GetViewport().GetVisibleRect().Size.Y * 0.35f) + GD.RandRange(-20, 20)
+            );
+            popup.ZIndex = 100;
+            AddChild(popup);
+
+            var tween = popup.CreateTween();
+            tween.SetParallel(true);
+            tween.TweenProperty(popup, "position:y", popup.Position.Y - 60, 1.0f)
+                .SetTrans(Tween.TransitionType.Quad)
+                .SetEase(Tween.EaseType.Out);
+            tween.TweenProperty(popup, "modulate:a", 0.0f, 1.0f)
+                .SetTrans(Tween.TransitionType.Quad)
+                .SetEase(Tween.EaseType.In);
+            tween.Chain();
+            tween.TweenCallback(Callable.From(() => popup.QueueFree()));
         }
     }
 }

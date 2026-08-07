@@ -252,6 +252,8 @@ namespace Schicksalswurf.Dungeon
             _settingsUI.ZIndex = Z_OVERLAY;
             _uiLayer.AddChild(_settingsUI);
             _overlayUIs.Add(_settingsUI);
+            _settingsUI.Load();
+            CombatUI.ShowDamageNumbersSetting = _settingsUI.ShowDamageNumbers;
         }
 
         private void SetupGameOverUI()
@@ -382,6 +384,10 @@ namespace Schicksalswurf.Dungeon
             float camRot = DungeonRenderer3D.DirectionToRotation(Facing);
             _camera.SnapToPosition(camPos, camRot);
             _renderer.UpdatePlayerLight(camPos);
+
+            // AutoSave after level generation if enabled
+            if (_settingsUI != null && _settingsUI.AutoSave)
+                SaveSystem.SaveGame(Party, _currentLevel, GridPosition, (int)Facing, Party.Gold);
         }
 
         private void PlaceNPCs()
@@ -437,6 +443,10 @@ namespace Schicksalswurf.Dungeon
             // Sync overlay state: if the active overlay was closed externally, clear it
             if (_activeOverlay != null && !_activeOverlay.Visible)
                 _activeOverlay = null;
+
+            // Sync damage numbers setting
+            if (_settingsUI != null)
+                CombatUI.ShowDamageNumbersSetting = _settingsUI.ShowDamageNumbers;
 
             // Check main menu
             if (!_gameStarted && _mainMenuUI != null)
@@ -513,8 +523,8 @@ namespace Schicksalswurf.Dungeon
                 if (_dialogueUI.ShopRequested)
                 {
                     _dialogueUI.ShopRequested = false;
-                    _inventoryUI.SetParty(Party);
                     ShowOverlay(_inventoryUI);
+                    _inventoryUI.ShowShop(Party);
                 }
                 if (_dialogueUI.QuestToStart != null)
                 {
@@ -538,8 +548,8 @@ namespace Schicksalswurf.Dungeon
                 if (_townUI.ShopRequested)
                 {
                     _townUI.ShopRequested = false;
-                    _inventoryUI.SetParty(Party);
                     ShowOverlay(_inventoryUI);
+                    _inventoryUI.ShowShop(Party);
                 }
             }
 
@@ -1000,8 +1010,8 @@ namespace Schicksalswurf.Dungeon
             _combatScene.SetupGrid(_combat.Grid);
             _combatScene.RenderUnits(_combat.Grid);
 
-            // Focus camera on active unit
-            if (_combat.ActiveUnit != null)
+            // Focus camera on active unit (only if combat camera is enabled)
+            if (_combat.ActiveUnit != null && _settingsUI.CombatCamera)
                 _combatScene.FocusCameraOn(_combat.ActiveUnit.GridPosition);
 
             // Make combat camera current
@@ -1032,7 +1042,8 @@ namespace Schicksalswurf.Dungeon
             if (_combat.ActiveUnit != null)
             {
                 _combatScene.SelectUnit(_combat.ActiveUnit.GridPosition);
-                _combatScene.FocusCameraOn(_combat.ActiveUnit.GridPosition);
+                if (_settingsUI.CombatCamera)
+                    _combatScene.FocusCameraOn(_combat.ActiveUnit.GridPosition);
             }
         }
 

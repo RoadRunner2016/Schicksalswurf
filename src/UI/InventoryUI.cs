@@ -72,6 +72,7 @@ namespace Schicksalswurf.UI
 
             // Title
             var title = new Label { Text = "🎒 INVENTAR 🎒" };
+            title.Name = "Title";
             title.HorizontalAlignment = HorizontalAlignment.Center;
             title.AddThemeFontSizeOverride("font_size", 22);
             title.AddThemeColorOverride("font_color", HeaderColor);
@@ -143,6 +144,16 @@ namespace Schicksalswurf.UI
 
         public void SetParty(Party party) => _party = party;
 
+        public void ShowShop(Party party)
+        {
+            _party = party;
+            _isShopMode = true;
+            _isActive = true;
+            Visible = true;
+            _selectedMember = 0;
+            RefreshUI();
+        }
+
         public void Toggle(bool shopMode = false)
         {
             if (_party == null || _party.Members.Count == 0) return;
@@ -182,6 +193,11 @@ namespace Schicksalswurf.UI
         {
             if (_party == null) return;
             var member = _party.Members[_selectedMember];
+
+            // Update title based on mode
+            var titleLabel = _mainContainer.GetNodeOrNull<Label>("Title");
+            if (titleLabel != null)
+                titleLabel.Text = _isShopMode ? "🛒 HÄNDLER 🛒" : "🎒 INVENTAR 🎒";
 
             _goldLabel.Text = $"Gold: {_party.Gold}G";
 
