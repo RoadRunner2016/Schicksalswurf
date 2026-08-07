@@ -62,6 +62,9 @@ namespace Schicksalswurf.Dungeon
         // Currently active overlay (modal) — only one at a time
         private Control _activeOverlay;
 
+        // Background UI that was hidden when an overlay opened (restored on close)
+        private Control _hiddenBackground;
+
         // All overlay-type UIs that should be mutually exclusive
         private readonly System.Collections.Generic.HashSet<Control> _overlayUIs = new();
 
@@ -287,7 +290,8 @@ namespace Schicksalswurf.Dungeon
         }
 
         /// <summary>
-        /// Shows an overlay UI modally: hides all other overlays, shows this one on top.
+        /// Shows an overlay UI modally: hides all other overlays and background UIs,
+        /// shows this one on top.
         /// </summary>
         private void ShowOverlay(Control ui)
         {
@@ -295,12 +299,32 @@ namespace Schicksalswurf.Dungeon
             // Hide any currently active overlay
             if (_activeOverlay != null && _activeOverlay != ui)
                 HideOverlay(_activeOverlay);
+
+            // Hide background UI (main menu, town, char creation) so it doesn't overlap
+            _hiddenBackground = null;
+            if (_mainMenuUI != null && _mainMenuUI.Visible)
+            {
+                _hiddenBackground = _mainMenuUI;
+                _mainMenuUI.Visible = false;
+            }
+            else if (_townUI != null && _townUI.Visible)
+            {
+                _hiddenBackground = _townUI;
+                _townUI.Visible = false;
+            }
+            else if (_charCreationUI != null && _charCreationUI.Visible)
+            {
+                _hiddenBackground = _charCreationUI;
+                _charCreationUI.Visible = false;
+            }
+
             ui.Visible = true;
             _activeOverlay = ui;
         }
 
         /// <summary>
-        /// Hides an overlay UI and clears the active overlay if it matches.
+        /// Hides an overlay UI, clears the active overlay, and restores
+        /// the background UI that was hidden when the overlay opened.
         /// </summary>
         private void HideOverlay(Control ui)
         {
@@ -308,16 +332,29 @@ namespace Schicksalswurf.Dungeon
             ui.Visible = false;
             if (_activeOverlay == ui)
                 _activeOverlay = null;
+
+            // Restore the background UI that was hidden
+            if (_hiddenBackground != null)
+            {
+                _hiddenBackground.Visible = true;
+                _hiddenBackground = null;
+            }
         }
 
         /// <summary>
-        /// Hides all overlay UIs at once.
+        /// Hides all overlay UIs at once and restores background.
         /// </summary>
         private void HideAllOverlays()
         {
             foreach (var ui in _overlayUIs)
                 ui.Visible = false;
             _activeOverlay = null;
+
+            if (_hiddenBackground != null)
+            {
+                _hiddenBackground.Visible = true;
+                _hiddenBackground = null;
+            }
         }
 
         private void StartGame()
