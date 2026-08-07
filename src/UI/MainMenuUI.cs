@@ -16,10 +16,10 @@ namespace Schicksalswurf.UI
         private Label _titleLabel;
         private Label _subtitleLabel;
         private Label _versionLabel;
-        private SettingsUI _settingsUI;
 
         public bool StartRequested { get; private set; } = false;
         public bool LoadRequested { get; private set; } = false;
+        public System.Action SettingsRequested { get; set; }
 
         private static readonly Color PanelBg = new(0.03f, 0.03f, 0.06f, 0.98f);
         private static readonly Color BorderColor = new(0.45f, 0.35f, 0.12f, 0.9f);
@@ -133,10 +133,6 @@ namespace Schicksalswurf.UI
             _versionLabel.AddThemeColorOverride("font_color", DimColor);
             _versionLabel.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
             _mainContainer.AddChild(_versionLabel);
-
-            // Settings UI (hidden by default)
-            _settingsUI = new SettingsUI();
-            AddChild(_settingsUI);
         }
 
         private Button CreateMenuButton(string text, bool primary)
@@ -171,7 +167,7 @@ namespace Schicksalswurf.UI
 
         private void OnSettings()
         {
-            _settingsUI?.Toggle();
+            SettingsRequested?.Invoke();
         }
 
         private void OnQuit()

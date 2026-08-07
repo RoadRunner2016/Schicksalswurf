@@ -53,6 +53,18 @@ namespace Schicksalswurf.Dungeon
         private bool _creationDone = false;
         private bool _gameStarted = false;
 
+        // UI Z-order layers
+        private const int Z_HUD = 0;
+        private const int Z_MENU = 10;
+        private const int Z_OVERLAY = 20;
+        private const int Z_TOP = 30;
+
+        // Currently active overlay (modal) — only one at a time
+        private Control _activeOverlay;
+
+        // All overlay-type UIs that should be mutually exclusive
+        private readonly System.Collections.Generic.HashSet<Control> _overlayUIs = new();
+
         // Core systems
         private SoundSystem _sound;
         private ParticleEffects _particles;
@@ -103,6 +115,10 @@ namespace Schicksalswurf.Dungeon
             SetupLoadingScreen();
             SetupAchievementsUI();
             SetupCraftingUI();
+
+            // Wire MainMenu settings button to the shared SettingsUI
+            if (_mainMenuUI != null)
+                _mainMenuUI.SettingsRequested += () => ShowOverlay(_settingsUI);
 
             // Core systems
             _sound = new SoundSystem { Name = "SoundSystem" };
@@ -173,79 +189,133 @@ namespace Schicksalswurf.Dungeon
         private void SetupCombatUI()
         {
             _combatUI = new CombatUI { Name = "CombatUI" };
+            _combatUI.ZIndex = Z_OVERLAY;
             _uiLayer.AddChild(_combatUI);
         }
 
         private void SetupCharacterSheetUI()
         {
             _charSheetUI = new CharacterSheetUI { Name = "CharacterSheetUI" };
+            _charSheetUI.ZIndex = Z_OVERLAY;
             _uiLayer.AddChild(_charSheetUI);
+            _overlayUIs.Add(_charSheetUI);
         }
 
         private void SetupInventoryUI()
         {
             _inventoryUI = new InventoryUI { Name = "InventoryUI" };
+            _inventoryUI.ZIndex = Z_OVERLAY;
             _uiLayer.AddChild(_inventoryUI);
+            _overlayUIs.Add(_inventoryUI);
         }
 
         private void SetupCharacterCreationUI()
         {
             _charCreationUI = new CharacterCreationUI { Name = "CharacterCreationUI" };
+            _charCreationUI.ZIndex = Z_MENU;
             _uiLayer.AddChild(_charCreationUI);
         }
 
         private void SetupDialogueUI()
         {
             _dialogueUI = new DialogueUI { Name = "DialogueUI" };
+            _dialogueUI.ZIndex = Z_OVERLAY;
             _uiLayer.AddChild(_dialogueUI);
+            _overlayUIs.Add(_dialogueUI);
         }
 
         private void SetupHelpUI()
         {
             _helpUI = new HelpUI { Name = "HelpUI" };
+            _helpUI.ZIndex = Z_OVERLAY;
             _uiLayer.AddChild(_helpUI);
+            _overlayUIs.Add(_helpUI);
         }
 
         private void SetupMainMenuUI()
         {
             _mainMenuUI = new MainMenuUI { Name = "MainMenuUI" };
+            _mainMenuUI.ZIndex = Z_MENU;
             _uiLayer.AddChild(_mainMenuUI);
         }
 
         private void SetupTownUI()
         {
             _townUI = new TownUI { Name = "TownUI" };
+            _townUI.ZIndex = Z_MENU;
             _uiLayer.AddChild(_townUI);
         }
 
         private void SetupSettingsUI()
         {
             _settingsUI = new SettingsUI { Name = "SettingsUI" };
+            _settingsUI.ZIndex = Z_OVERLAY;
             _uiLayer.AddChild(_settingsUI);
+            _overlayUIs.Add(_settingsUI);
         }
 
         private void SetupGameOverUI()
         {
             _gameOverUI = new GameOverUI { Name = "GameOverUI" };
+            _gameOverUI.ZIndex = Z_TOP;
             _uiLayer.AddChild(_gameOverUI);
         }
 
         private void SetupLoadingScreen()
         {
             _loadingScreen = new LoadingScreenUI { Name = "LoadingScreen" };
+            _loadingScreen.ZIndex = Z_TOP;
             _uiLayer.AddChild(_loadingScreen);
         }
 
         private void SetupAchievementsUI()
         {
             _achievementsUI = new AchievementsUI { Name = "AchievementsUI" };
+            _achievementsUI.ZIndex = Z_OVERLAY;
             _uiLayer.AddChild(_achievementsUI);
+            _overlayUIs.Add(_achievementsUI);
         }
 
         private void SetupCraftingUI()
         {
             _craftingUI = new CraftingUI { Name = "CraftingUI" };
+            _craftingUI.ZIndex = Z_OVERLAY;
             _uiLayer.AddChild(_craftingUI);
+            _overlayUIs.Add(_craftingUI);
+        }
+
+        /// <summary>
+        /// Shows an overlay UI modally: hides all other overlays, shows this one on top.
+        /// </summary>
+        private void ShowOverlay(Control ui)
+        {
+            if (ui == null) return;
+            // Hide any currently active overlay
+            if (_activeOverlay != null && _activeOverlay != ui)
+                HideOverlay(_activeOverlay);
+            ui.Visible = true;
+            _activeOverlay = ui;
+        }
+
+        /// <summary>
+        /// Hides an overlay UI and clears the active overlay if it matches.
+        /// </summary>
+        private void HideOverlay(Control ui)
+        {
+            if (ui == null) return;
+            ui.Visible = false;
+            if (_activeOverlay == ui)
+                _activeOverlay = null;
+        }
+
+        /// <summary>
+        /// Hides all overlay UIs at once.
+        /// </summary>
+        private void HideAllOverlays()
+        {
+            foreach (var ui in _overlayUIs)
+                ui.Visible = false;
+            _activeOverlay = null;
         }
 
         private void StartGame()
@@ -364,6 +434,10 @@ namespace Schicksalswurf.Dungeon
 
         public override void _Process(double delta)
         {
+            // Sync overlay state: if the active overlay was closed externally, clear it
+            if (_activeOverlay != null && !_activeOverlay.Visible)
+                _activeOverlay = null;
+
             // Check main menu
             if (!_gameStarted && _mainMenuUI != null)
             {
@@ -440,7 +514,7 @@ namespace Schicksalswurf.Dungeon
                 {
                     _dialogueUI.ShopRequested = false;
                     _inventoryUI.SetParty(Party);
-                    _inventoryUI.Toggle(true);
+                    ShowOverlay(_inventoryUI);
                 }
                 if (_dialogueUI.QuestToStart != null)
                 {
@@ -465,7 +539,7 @@ namespace Schicksalswurf.Dungeon
                 {
                     _townUI.ShopRequested = false;
                     _inventoryUI.SetParty(Party);
-                    _inventoryUI.Toggle(true);
+                    ShowOverlay(_inventoryUI);
                 }
             }
 
@@ -501,44 +575,34 @@ namespace Schicksalswurf.Dungeon
             if (_inCombat || _camera.IsAnimating || _inputCooldown > 0)
                 return;
 
-            if (_charSheetUI != null && _charSheetUI.IsActive)
+            // Block dungeon input while any overlay is active
+            if (_activeOverlay != null)
+            {
+                // Esc closes the active overlay
+                if (@event is InputEventKey escKey && escKey.Pressed && escKey.Keycode == Key.Escape)
+                {
+                    HideOverlay(_activeOverlay);
+                }
                 return;
-
-            if (_inventoryUI != null && _inventoryUI.IsActive)
-                return;
-
-            if (_dialogueUI != null && _dialogueUI.IsActive)
-                return;
-
-            if (_helpUI != null && _helpUI.IsActive)
-                return;
+            }
 
             if (_townUI != null && _townUI.IsActive)
-                return;
-
-            if (_settingsUI != null && _settingsUI.IsActive)
                 return;
 
             if (_gameOverUI != null && _gameOverUI.IsActive)
                 return;
 
-            if (_achievementsUI != null && _achievementsUI.IsActive)
-                return;
-
-            if (_craftingUI != null && _craftingUI.IsActive)
-                return;
-
             // H = help
             if (@event is InputEventKey hKey && hKey.Pressed && hKey.Keycode == Key.H)
             {
-                _helpUI.Toggle();
+                ShowOverlay(_helpUI);
                 return;
             }
 
             // F2 = settings
             if (@event is InputEventKey setKey && setKey.Pressed && setKey.Keycode == Key.F2)
             {
-                _settingsUI.Toggle();
+                ShowOverlay(_settingsUI);
                 return;
             }
 
@@ -547,6 +611,7 @@ namespace Schicksalswurf.Dungeon
             {
                 _stats.CheckAchievements();
                 _achievementsUI.Show(_stats);
+                _activeOverlay = _achievementsUI;
                 return;
             }
 
@@ -554,6 +619,7 @@ namespace Schicksalswurf.Dungeon
             if (@event is InputEventKey craftKey && craftKey.Pressed && craftKey.Keycode == Key.F4)
             {
                 _craftingUI.Show(Party);
+                _activeOverlay = _craftingUI;
                 return;
             }
 
@@ -589,12 +655,18 @@ namespace Schicksalswurf.Dungeon
             else if (@event.IsActionPressed("open_character"))
             {
                 _charSheetUI.SetParty(Party);
-                _charSheetUI.Toggle();
+                if (_charSheetUI.IsActive)
+                    HideOverlay(_charSheetUI);
+                else
+                    ShowOverlay(_charSheetUI);
             }
             else if (@event.IsActionPressed("open_inventory"))
             {
                 _inventoryUI.SetParty(Party);
-                _inventoryUI.Toggle();
+                if (_inventoryUI.IsActive)
+                    HideOverlay(_inventoryUI);
+                else
+                    ShowOverlay(_inventoryUI);
             }
             else if (@event is InputEventKey rKey && rKey.Pressed && rKey.Keycode == Key.R)
             {
