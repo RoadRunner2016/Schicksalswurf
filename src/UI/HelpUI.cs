@@ -168,6 +168,6 @@ namespace Schicksalswurf.UI
             Visible = _isActive;
         }
 
-        public bool IsActive => _isActive;
+        public bool IsActive => Visible;
     }
 }

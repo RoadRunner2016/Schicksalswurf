@@ -611,7 +611,7 @@ namespace Schicksalswurf.Dungeon
             {
                 _stats.CheckAchievements();
                 _achievementsUI.Show(_stats);
-                _activeOverlay = _achievementsUI;
+                ShowOverlay(_achievementsUI);
                 return;
             }
 
@@ -619,7 +619,7 @@ namespace Schicksalswurf.Dungeon
             if (@event is InputEventKey craftKey && craftKey.Pressed && craftKey.Keycode == Key.F4)
             {
                 _craftingUI.Show(Party);
-                _activeOverlay = _craftingUI;
+                ShowOverlay(_craftingUI);
                 return;
             }
 

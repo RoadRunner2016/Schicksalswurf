@@ -156,11 +156,11 @@ namespace Schicksalswurf.UI
             }
         }
 
-        public bool IsActive => _isActive;
+        public bool IsActive => Visible;
 
         public override void _UnhandledInput(InputEvent @event)
         {
-            if (!_isActive) return;
+            if (!Visible) return;
 
             if (@event is InputEventKey key && key.Pressed)
             {

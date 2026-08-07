@@ -93,7 +93,7 @@ namespace Schicksalswurf.UI
             Visible = false;
         }
 
-        public bool IsActive => _isActive;
+        public bool IsActive => Visible;
 
         private void RefreshUI()
         {
