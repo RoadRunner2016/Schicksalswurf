@@ -149,6 +149,17 @@ namespace Schicksalswurf.Dungeon
 
             // Show main menu first
             _mainMenuUI.Visible = true;
+
+            // Hide HUD elements until the game starts
+            SetHudVisible(false);
+        }
+
+        private void SetHudVisible(bool visible)
+        {
+            if (_positionLabel != null) _positionLabel.Visible = visible;
+            if (_messageLabel != null) _messageLabel.Visible = visible;
+            if (_partyLabel != null) _partyLabel.Visible = visible;
+            if (_minimap != null) _minimap.Visible = visible;
         }
 
         private void SetupUI()
@@ -364,6 +375,9 @@ namespace Schicksalswurf.Dungeon
             _gameStarted = true;
             _charCreationUI.QueueFree();
             _charCreationUI = null;
+
+            // Show HUD now that the game has started
+            SetHudVisible(true);
 
             // Start quests
             QuestRegistry.StartQuest("clear_level_1");
